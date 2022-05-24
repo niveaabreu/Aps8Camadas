@@ -15,22 +15,15 @@ class Encode:
     def __init__(self) -> None:
         self.signal = signalMeu()
         self.fs = 44100
-        self.A = 1 
-        self.T = 5
-        self.t = np.linspace(-self.T/2,self.T/2,self.T*self.fs)
+        self.A = 1
         print("--->Inicializando encoder\n")
         sd.default.samplerate = self.fs
-        sd.default.channels = 2  #voce pode ter que alterar isso dependendo da sua placa
-        print("-->Gravação irá se iniciar em 3s...\n")
-        time.sleep(3.3)
-        print("-->Gravação Iniciada\n")
-        numAmostras = self.fs * self.T
-        audio = sd.rec(int(numAmostras), self.fs, channels=1)
+        sd.default.channels = 1  #voce pode ter que alterar isso dependendo da sua placa
+        self.audio, self.samplerate = sf.read('guns.wav')
+        self.T = int(len(self.audio[:336000,0])/self.samplerate)
+        self.t=np.arange(0,len(self.audio[:336000,0])/self.samplerate,1/self.samplerate)
+        sd.play(self.audio[:336000,0], self.fs)
         sd.wait()
-        print("-->Gravação encerrada\n")
-        self.audio = audio[:,0]
-        filename = 'gravacao.wav'
-        sf.write(filename, audio, self.fs)
 
     def LPF(self,signal, cutoff_hz):
         nyq_rate = self.fs/2
@@ -46,20 +39,45 @@ class Encode:
         
     def normalize(self,sinal):
         max = np.max(np.abs(sinal))
-        return np.array(map(lambda x:x/max,sinal))
+        return sinal/max
 
     def todB(self,s):
         sdB = 10*np.log10(s)
         return(sdB)
 
     def main(self):
-        print("--> Em 3s iremos iniciar a transmissão do sinal modulado\n")
-        audio_res = self.LPF(self.audio,2500)
-        _,portadora = self.signal.generateSin(13000,self.A,self.T,self.fs)
+        print("-->  Tocando Áudio filtrado\n")
+        audio_res = self.LPF(self.audio[:336000,0],2500)
+
+        plt.plot(self.t,audio_res)
+        plt.title('Sinal de áudio filtrado – domínio do tempo')
+        plt.show()
+
+        X, Y = self.signal.calcFFT(audio_res, self.fs)
+        plt.plot(X, np.abs(Y))
+        plt.xlabel('Hz')
+        plt.title('Sinal de áudio filtrado – domínio da frequência')
+        plt.show()
+
+        sd.play(audio_res, self.fs)
+        sd.wait()
+        _,portadora = self.signal.generateSin(13000,self.A,self.T,self.samplerate)
         sinal = audio_res*portadora
+        print("--> Áudio modularizado\n")
+
+        plt.plot(self.t,sinal)
+        plt.title('sinal de áudio modulado – domínio do tempo ')
+        plt.show()
+
+        Xmod, Ymod = self.signal.calcFFT(sinal, self.fs)
+        plt.plot(Xmod, np.abs(Ymod))
+        plt.xlabel('Hz')
+        plt.title('sinal de áudio modulado – domínio da frequência')
+        plt.show()
+
         sd.play(sinal, self.fs)
         sd.wait()
-        print("--> Finalizado áudio controlado\n")
+        print("--> Normalizando modularização\n")
         sinal_normalizado = self.normalize(sinal)
         print("--> Executando sinal normalizado\n")
         sd.play(sinal_normalizado, self.fs)
