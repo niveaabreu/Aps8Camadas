@@ -22,8 +22,8 @@ class Decode:
         self.fs = 44100
         self.audio, self.samplerate = sf.read('sinal_modulado.wav')
         self.A = 1
-        self.T = int(len(self.audio[:308700])/self.samplerate)
-        self.t=np.arange(0,len(self.audio[:308700])/self.samplerate,1/self.samplerate)
+        self.T = int(len(self.audio)/self.samplerate)
+        self.t=np.arange(0,len(self.audio)/self.samplerate,1/self.samplerate)
         print("--->Ouvindo sinal a ser demodularizado\n")
         sd.play(self.audio, self.fs)
         sd.wait()
@@ -43,7 +43,7 @@ class Decode:
     def main(self):
     
         _,portadora = self.signal.generateSin(13000,self.A,self.T,self.samplerate)
-        sinal = self.audio[:308700] * portadora
+        sinal = self.audio * portadora
         audio_res = self.LPF(sinal,2500)
 
         Xdmod, Ydemod = self.signal.calcFFT(sinal, self.samplerate)

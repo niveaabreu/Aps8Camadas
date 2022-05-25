@@ -19,10 +19,10 @@ class Encode:
         print("--->Inicializando encoder\n")
         sd.default.samplerate = self.fs
         sd.default.channels = 1  #voce pode ter que alterar isso dependendo da sua placa
-        self.audio, self.samplerate = sf.read('guns.wav')
-        self.T = int(len(self.audio[:336000,0])/self.samplerate)
-        self.t=np.arange(0,len(self.audio[:336000,0])/self.samplerate,1/self.samplerate)
-        sd.play(self.audio[:336000,0], self.fs)
+        self.audio, self.samplerate = sf.read('gravacao.wav')
+        self.T = int(len(self.audio)/self.samplerate)
+        self.t=np.arange(0,len(self.audio)/self.samplerate,1/self.samplerate)
+        sd.play(self.audio, self.fs)
         sd.wait()
 
     def LPF(self,signal, cutoff_hz):
@@ -47,7 +47,7 @@ class Encode:
 
     def main(self):
         print("-->  Tocando Áudio filtrado\n")
-        audio_res = self.LPF(self.audio[:336000,0],2500)
+        audio_res = self.LPF(self.audio,2500)
 
         plt.plot(self.t,audio_res)
         plt.title('Sinal de áudio filtrado – domínio do tempo')
